@@ -25,7 +25,7 @@ SECRET_KEY = '=!4%%q-gf#nh!51kc&eij+owx!zn$m^_ui)38+l+qexbiy56_9'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['bai.a.gapi.store']
 
 
 # Application definition
