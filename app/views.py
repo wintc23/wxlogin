@@ -10,7 +10,7 @@ import json
 
 APPID="wx2d1d6aa2f86768d7"
 APP_SECRET="6c909d49659ee0598ba1d46638388d11"
-REDIRECT_URI="https://www.wyr.me/login/weixin"
+REDIRECT_URI="https://www.wyr.me/login/weixin".encode("utf-8")
 
 def generate_url_params(info):
     lst=[]
