@@ -52,7 +52,7 @@ def get_jsondata_by_url(url):
     return data
 
 def get_user_info_by_token(access_token):
-    url="https://api.weixin.qq.com/sns/userrinfo?%s"generate_url_params([("access_token",access_token),])
+    url="https://api.weixin.qq.com/sns/userinfo?%s"%generate_url_params([("access_token",access_token),])
     response=urllib.request.urlopen(url)
     response_json=response.read().decode("utf-8")
     data=get_jsondata_by_url(url)
