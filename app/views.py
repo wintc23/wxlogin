@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from django.urls import reverse
 from django.http import HttpResponseRedirect,HttpResponse
-from .redis import redis_db
-from models import WXUserInfo
+from .myredis import redis_db
+from .models import WXUserInfo
 
 import json
 import time
@@ -23,17 +23,17 @@ def generate_url_params(info):
     return info_str
 
 def login(request):
-    check_login(request)
+    return check_login(request)
 
 def check_login(request):
     if "user_wx_info" in request.session:
         token_id=request.session["user_wx_info"]
         token=redis_db.hget(token_id)
-        data=json.loads(token)
+        data=json.loads(token.decode("utf-8"))
         now_time=time.time()
         if now_time>data['access_time']+30*24*60*60:
             return wx_login(request)
-        url="https://api.weixin.qq.com/sns/auth?%s"%([("access_token",data["access_token"]),("openid",data["openid"])])
+        url="https://api.weixin.qq.com/sns/auth?%s"%generate_url_params([("access_token",data["access_token"]),("openid",data["openid"])])
         data=get_jsondata_by_url(url)
         if data.get("errcode")!=0:
             info=[("appid",APPID),("grant_type","refresh_token"),("refresh_token",data["refresh_token"])]
@@ -44,6 +44,7 @@ def check_login(request):
             data["access_token"]=now_time      
             redis_db.hset(data["openid"],json.dumps(data))
             refresh_user_info(user_data)
+        return HttpResponseRedirect(reverse("app:index"))
     return wx_login(request)
 
         
@@ -68,20 +69,30 @@ def login_callback(request):
     url="https://api.weixin.qq.com/sns/oauth2/access_token?%s"%generate_url_params(info)
     now_time=time.time()
     data=get_jsondata_by_url(url)
+    if "errcode" in data:
+        return HttpResponseRedirect(reverse("app:login"))
     expires_in=data.get("expires_in")
     data["access_time"]=now_time
     access_token=data.get('access_token')
     openid=data.get('openid')
-    redis_db.hset(openid,json_dumps(data))
+    request.session["user_wx_info"]=openid
+    redis_db.hset(openid,json.dumps(data))
     refresh_user_info(access_token,openid)
-    return HttpResponse("%s"%user_data)
+    return HttpResponse("%s"%data)
 
 def refresh_user_info(access_token,openid):
     user_data=get_user_info_from_wechat(access_token,openid)
     save_user_info(user_data)
 
 def get_jsondata_by_url(url):
-    response=urllib.request.urlopen(url)
+    print(url)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6',
+        'Referer': r'http://www.lagou.com/zhaopin/Python/?labelWords=label',
+        'Connection': 'keep-alive'
+    }
+    request=urllib.request.Request(url,headers=headers)
+    response=urllib.request.urlopen(request)
     response_json=response.read().decode("utf-8")
     print(response_json)
     data=json.loads(response_json)
@@ -97,11 +108,11 @@ def save_user_info(data):
     image_url=data["headimgurl"]
     response=urllib.request.urlopen(image_url)
     image_data=response.read()
-    with open("../static/headimages/%s.jpg"%data["openid"],"wb") as image:
+    with open("..\\static\\headimages\\%s.jpg"%data["openid"],"wb") as image:
         image.write(image_data)
         image.flush()
     info_str=json.dumps(data)
-    users=User.objects.all().filter(openid=data["openid"])
+    users=WXUserInfo.objects.all().filter(openid=data["openid"])
     if users:
         user=users[0]
         user.info_str=info_str

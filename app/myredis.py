@@ -3,7 +3,7 @@ import redis
 
 class CRedis:
     def __init__(self):
-        self.host="localhost"
+        self.host="127.0.0.1"
         self.port=6379
         self.db=0
         self.r=redis.Redis(host=self.host,port=self.port,db=self.db)
@@ -26,6 +26,6 @@ class CRedis:
         return self.r.hgetall('wxlogin')
 
 
-if not globals().has_key("redis"):
+if not "redis_db" in globals():
     redis_db=CRedis()
 

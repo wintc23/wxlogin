@@ -4,6 +4,6 @@ from django.db import models
 
 
 class WXUserInfo(models.Model):
-    openid=models.CharField("openid")
-    info_str=models.CharField("info_str")
+    openid=models.TextField("openid")
+    info_str=models.TextField("info_str")
     
