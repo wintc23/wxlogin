@@ -10,7 +10,7 @@ import json
 
 APPID="wx2d1d6aa2f86768d7"
 APP_SECRET="6c909d49659ee0598ba1d46638388d11"
-REDIRECT_URI="wyr.me/login/weixin".encode("utf-8")
+REDIRECT_URI="https://wyr.me/login/weixin"
 
 def generate_url_params(info):
     lst=[]
@@ -30,7 +30,7 @@ def login(request):
     return HttpResponseRedirect(url)
 
 def login_callback(request):
-    code=request.GET.get(code)
+    code=request.GET.get('code')
     info=[
         ("appid",APPID),
         ("secret",APP_SECRET),
