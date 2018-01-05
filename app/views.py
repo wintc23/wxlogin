@@ -1,5 +1,5 @@
 from django.shortcuts import render
-
+from django.urls import reverse
 from django.http import HttpResponseRedirect,HttpResponse
 import json
 
@@ -40,8 +40,9 @@ def login_callback(request):
     url="https://api.weixin.qq.com/sns/oauth2/access_token?%s"%generate_url_params(info)
     
     response=urllib.request.urlopen(url)
-    response_json=response.read()
+    response_json=response.read().decode("utf-8")
     print(response_json)
+    data=json.loads(response_json)
     access_token=data.get("access_token")
     return HttpResponseRedirect(reverse("app:index"))
     
