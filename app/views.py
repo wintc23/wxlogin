@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.urls import reverse
 from django.http import HttpResponseRedirect,HttpResponse
-from ../redis import redis_db
+from .redis import redis_db
 from models import WXUserInfo
 
 import json

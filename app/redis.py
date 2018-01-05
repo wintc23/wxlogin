@@ -25,3 +25,7 @@ class CRedis:
     def hgetall():
         return self.r.hgetall('wxlogin')
 
+
+if not globals().has_key("redis"):
+    redis_db=CRedis()
+
