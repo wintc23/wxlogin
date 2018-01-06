@@ -56,10 +56,10 @@ def check_login(request):
             data=get_jsondata_by_url(url)
             if "errcode" in data:
                 return wx_login(request)
-            data["access_time"]=neniow_time  
+            data["access_time"]=now_time  
             redis_db.hset(data["openid"],json.dumps(data))
         user_data=get_user_info_from_wechat(data["access_token"],data["openid"])
-        save_user_info(data)
+        save_user_info(user_data)
         return HttpResponseRedirect(reverse("app:index"))
     return wx_login(request)
         
