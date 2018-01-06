@@ -22,6 +22,21 @@ def generate_url_params(info):
     info_str="&".join(lst)
     return info_str
 
+def get_jsondata_by_url(url):
+    request=urllib.request.Request(url)
+    response=urllib.request.urlopen(request)
+    response_json=response.read().decode("utf-8")
+    data=json.loads(response_json)
+    return data
+
+
+
+def index(request):
+    return HttpResponse("<h1>login success</h1>")
+
+def home(request):
+    return HttpResponse("Hello~")
+
 def login(request):
     return check_login(request)
 
@@ -34,19 +49,19 @@ def check_login(request):
         if now_time>data['access_time']+30*24*60*60:
             return wx_login(request)
         url="https://api.weixin.qq.com/sns/auth?%s"%generate_url_params([("access_token",data["access_token"]),("openid",data["openid"])])
-        data=get_jsondata_by_url(url)
-        if data.get("errcode")!=0:
+        auth_data=get_jsondata_by_url(url)
+        if auth_data.get("errcode")!=0:
             info=[("appid",APPID),("grant_type","refresh_token"),("refresh_token",data["refresh_token"])]
             url="https://api.weixin.qq.com/sns/oauth2/refresh_token?%s"%generate_url_params(info)
             data=get_jsondata_by_url(url)
             if "errcode" in data:
                 return wx_login(request)
-            data["access_token"]=now_time      
+            data["access_time"]=neniow_time  
             redis_db.hset(data["openid"],json.dumps(data))
-            refresh_user_info(user_data)
+        user_data=get_user_info_from_wechat(data["access_token"],data["openid"])
+        save_user_info(data)
         return HttpResponseRedirect(reverse("app:index"))
     return wx_login(request)
-
         
 def wx_login(request):
     info=[
@@ -84,20 +99,6 @@ def refresh_user_info(access_token,openid):
     user_data=get_user_info_from_wechat(access_token,openid)
     save_user_info(user_data)
 
-def get_jsondata_by_url(url):
-    print(url)
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6',
-        'Referer': r'http://www.lagou.com/zhaopin/Python/?labelWords=label',
-        'Connection': 'keep-alive'
-    }
-    request=urllib.request.Request(url,headers=headers)
-    response=urllib.request.urlopen(request)
-    response_json=response.read().decode("utf-8")
-    print(response_json)
-    data=json.loads(response_json)
-    return data
-
 def get_user_info_from_wechat(access_token,openid):
     info=[('access_token',access_token),('openid',openid)]
     url="https://api.weixin.qq.com/sns/userinfo?%s"%generate_url_params(info)
@@ -105,6 +106,8 @@ def get_user_info_from_wechat(access_token,openid):
     return data
 
 def save_user_info(data):
+    if get_user_info_from_db(data['openid'])==data:
+        return
     image_url=data["headimgurl"]
     response=urllib.request.urlopen(image_url)
     image_data=response.read()
@@ -128,11 +131,4 @@ def get_user_info_from_db(openid):
     info_str=user.info_str
     data=json.loads(info_str)
     return data
-
-def index(request):
-    return HttpResponse("<h1>login success</h1>")
-
-def home(request):
-    return HttpResponse("Hello~")
-
 
